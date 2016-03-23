@@ -215,7 +215,6 @@ void MainGame::render() {
 
 	drawSkybox(510.0f);
 	Render_Floor();
-	drawCube();
 	drawPlayer();
 
 	SDL_GL_SwapWindow(_window);
@@ -576,68 +575,6 @@ void MainGame::render() {
 	 //glDisable(GL_TEXTURE_2D);
 	 //glPopMatrix();
  }
-
-
-void MainGame::drawCube(){
-
-	glPushMatrix();
-	glBegin(GL_QUADS);
-
-	float red, green, blue;
-
-	red = 0.5;//(50 + rand()% 100) / 100;
-	green = 0.5;//(50 + rand()% 100) / 100;
-	blue = 1.0;//(50 + rand()% 100) / 100;
-
-	glColor3f(red, green, blue);
-	glNormal3f(0.0, 1.0, 0.0);
-	//   0 2 0  -2 2 0
-	glVertex3f(2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-	glVertex3f(2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-
-	/* red = (50 + rand()% 100) / 100;
-	green = (50 + rand()% 100) / 100;
-	blue = (50 + rand()% 100) / 100;*/
-
-	glColor3f(red, green, blue);
-	glNormal3f(0.0, 1.0, 0.0);
-
-	glVertex3f(0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-
-
-	/* red = (50 + rand()% 100) / 100;
-	green = (50 + rand()% 100) / 100;
-	blue = (50 + rand()% 100) / 100;*/
-
-	glColor3f(red, green, blue);
-	glNormal3f(0.0, 1.0, 0.0);
-
-	glVertex3f(0.0f * MAIN_SCALER, 0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-	glVertex3f(2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-	glVertex3f(2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-
-	/* red = (50 + rand()% 100) / 100;
-	green = (50 + rand()% 100) / 100;
-	blue = (50 + rand()% 100) / 100;*/
-
-	glColor3f(red, green, blue);
-	glNormal3f(0.0, 1.0, 0.0);
-
-	glVertex3f(0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-	glVertex3f(0.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-	glVertex3f(2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 0.0f * MAIN_SCALER);
-	glVertex3f(2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER, 2.0f * MAIN_SCALER);
-
-	glEnd();
-	glPopMatrix();
-}
-
 
 void MainGame::Render_Floor()
 {

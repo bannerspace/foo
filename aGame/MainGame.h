@@ -51,11 +51,9 @@ private:
 	//
 	void BindTexture(void *data, int width, int height, int format, unsigned int number);
 	unsigned int texture_id[100];
-	//unsigned int LoadTexture(const char *Filename, bool repeat);//unsigned int tex_number);
 	//
 	void initGlew();
 	//
-	void drawCube();
 	void Render_Floor();
 	void drawPlayer();
 
