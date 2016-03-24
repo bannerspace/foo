@@ -13,7 +13,10 @@ Player::Player()
 	
 	ObjectLoader loader;
 	//loader.print();
-	object = new Object (loader.ReadObjectGeometry("resources\\objects\\Captain America.obj"));
+	object = new Object (loader.ReadObjectGeometry("E:\\Users\\Banner\\Desktop\\aGame\\aGame\\resources\\objects\\Captain America"));
+
+
+
 	if (!object)
 		std::cout << "Can't load player's geometry" << std::endl;
 	//else

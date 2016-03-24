@@ -6,8 +6,7 @@
 #include <gl/GLU.h>
 #include "TextureLoader.h"
 #include "Player.h"
-//#include <GL/GL.h>
-//#include <GL/GLU.h>
+
 
 enum class GameState {PLAY, EXIT};
 
@@ -39,8 +38,6 @@ private:
 	void cameraMove(char dir);
 	void render();
 	//
-	void cameraCanMove();
-	//
 	float collisionPointPlane(float normalX, float normalY, float normalZ, float x1, float z1, float x2, float z2);
 	//
 	enum { SKY_LEFT = 0, SKY_BACK, SKY_RIGHT, SKY_FRONT, SKY_TOP, SKY_BOTTOM };
@@ -63,6 +60,13 @@ private:
 	int _screenHeight;
 	GameState _gameState;
 	camera _Camera;
-	TextureLoader _loader;
+
+	vector<unsigned int> lists;
+
+	unsigned int vbo;
+
+	TextureLoader *_loader;
+
+	
 };
 

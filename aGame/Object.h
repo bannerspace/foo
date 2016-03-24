@@ -14,29 +14,25 @@ public:
 		float x, y;
 	};
 
-	struct Material {
-		float amb[3];
-		float dif[3];
-		float spec[3];
-		float alpha;
-		float ns;
-		float ni;
-		int illum;
-		unsigned int texture;
-	};
+	/*struct Faces {
+		int face;
+		bool hasTexture;
+	};*/
 
-	Material material;
-	vector<float> vertex;//[100000];
-	vector<float> normals;//[100000];
-	vector<int> vertex_faces;//[15000];
-	vector<UVcoords> UV_vertex;//[15000];
+
+	
+
+	//Material material;
+	vector<int> textures;
+	vector<bool> facesHasTex;
+	vector<float> vertex;
+	vector<float> normals;
+	vector<int> vertex_faces;
+	vector<UVcoords> UV_vertex;
 	vector<int> texture_faces;
-	vector<int> normals_faces;//[15000];
-	vector<Material> materials;
+	vector<int> normals_faces;
 	vector<int> mat_start;
-	vector<std::string> mat_name;
-	//int vertex_count;
-	//int normals_count;
-	//int faces_count;
+	vector<string> mat_name;
+	vector<string> textures_name;
 };
 

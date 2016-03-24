@@ -3,6 +3,8 @@
 #include "Object.h"
 #include "ObjectLoader.h"
 #include "Camera.h"
+#include "TextureLoader.h"
+
 enum class PlayerState { ALIVE, DEAD };
 
 class Player
@@ -27,5 +29,7 @@ public:
 	Object *object;
 	Camera camera;
 	float scale;
+
+	TextureLoader _loader;
 };
 

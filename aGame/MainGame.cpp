@@ -18,7 +18,6 @@ void fatalError(std::string errorString) {
 
 MainGame::MainGame()
 {
-	//_Camera = {1.0, -1.0, 0., -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0, false, '\0', 0.01f, false};
 	_window = nullptr;
 	_screenWidth = 800;
 	_screenHeight = 600;
@@ -53,28 +52,26 @@ void MainGame::initSystems() {
 		fatalError("Couldn't initialize glew.");
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	glClearColor(0.f, 0.f, 0.f, 1.f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.f);
 
-	//glViewport(0, 0, _screenWidth, _screenHeight);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, (double)_screenWidth/_screenHeight, 1.0, 1500.0);
 	glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
 
 	initSkybox();
-
-	texture_id[0] = _loader.LoadTexture("resources\\textures\\ground.bmp", true);
+	_loader = new TextureLoader();
+	texture_id[0] = _loader->LoadTexture("resources\\textures\\ground.bmp", true);
 	////////////////////////COLLISION IS IN CPLUSPLUSGUT TUTS!!!!!!!!!!!!!!!!!!!
-	player.object->material.texture = _loader.LoadTexture("resources\\objects\\Marvel_Ultimate_Alliance-f3452c0.bmp", false);
-	//Player player;
-	//object = loader.ReadObjectGeometry("E:\\Users\\Banner\\Documents\\Visual Studio 2013\\Projects\\aGame\\aGame\\resources\\objects\\player.obj");
+	for (int i = 0; i < player.object->textures_name.size(); i++)
+	{
+		player.object->textures.push_back(_loader->LoadTexture(player.object->textures_name[i].c_str(),false));
+	}
+	drawPlayer();
+	
 }
 
 
@@ -140,6 +137,24 @@ void MainGame::processInput() {
 
 void MainGame::drawPlayer()
 {
+	int num;
+	num = glGenLists(1);
+	glNewList(num, GL_COMPILE);
+
+	/*
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(player.object->vertex), &player.object->vertex, GL_STATIC_DRAW);
+	
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);*/
+	//glLoadIdentity();
+	//glEnableClientState(GL_VERTEX_ARRAY);
+	//glEnableClientState(GL_COLOR_ARRAY);
+
+	//glVertexPointer(3, GL_FLOAT, 0, &player.object->vertex);
+	//glDrawArrays(GL_TRIANGLES, 0, player.object->vertex.size()/3);
+	
+
 
 	glEnable(GL_TEXTURE);
 	glEnable(GL_LIGHTING);
@@ -151,12 +166,8 @@ void MainGame::drawPlayer()
 	GLfloat position[] = { player.coords.x, fabs(player.camera.moveY * 2), player.coords.z , 1.0 };
 	GLfloat vector[] = { player.coords.x, fabs(player.camera.moveY), player.coords.z };
 
-	glColor3f(0.0f, 0.9f, 0.0f);
+	//+glBindTexture(GL_TEXTURE_2D, player.object->texture);
 
-
-	glBindTexture(GL_TEXTURE_2D, player.object->material.texture);
-
-	//glPushMatrix();
 	glLightfv(GL_LIGHT0, GL_POSITION, position);
 	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, vector);
 
@@ -164,58 +175,71 @@ void MainGame::drawPlayer()
 	glRotatef(player.coords.angle, 0, 1, 0);
 
 	int index = 0;
+	int mats = 0;
+
+	float texcoords[] = { 0., 0., 0., 1., 1., 1. };
 
 	for (int face = 0; face < player.object->vertex_faces.size(); face += 3)
 	{
+		if (player.object->mat_start.size() > 1 && player.object->mat_start.size() > mats+1)
+			if (face > player.object->mat_start[mats+1])
+			{
+				mats++;
+			}
+		glBindTexture(GL_TEXTURE_2D, player.object->textures[mats]);
+
 		glBegin(GL_TRIANGLES);
-		glColor3f(1.0, 1.0, 0.5);
 
-		unsigned int textCoords[6];
-		textCoords[0] = 0;
-		textCoords[1] = 0;
-		textCoords[2] = 0;
-		textCoords[3] = 1;
-		textCoords[4] = 1;
-		textCoords[5] = 1;
-
-		for (int vertex = 0; vertex < 3; vertex++)
-		{
-	
-			glTexCoord2f(player.object->UV_vertex[player.object->texture_faces[index]  - 1].x * 0.1 * player.scale, player.object->UV_vertex[player.object->texture_faces[index]  - 1 ].y * 0.1 * player.scale); //player.object->vertex[player.object->vertex_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 1] * 0.1 * player.scale);
-				glNormal3f(player.object->normals[player.object->normals_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->normals[player.object->normals_faces[index] * 3 - 2] * 0.1 * player.scale,
-				player.object->normals[player.object->normals_faces[index] * 3 - 1] * 0.1 * player.scale);
-			glVertex3f(player.object->vertex[player.object->vertex_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 2] * 0.1 * player.scale,
-				player.object->vertex[player.object->vertex_faces[index] * 3 - 1] * 0.1 * player.scale);
-			index++;
+			for (int vertex = 0, c = 0; vertex < 3; vertex++, c+=2)
+			{
+				//if (player.object->facesHasTex[index])
+				//glTexCoord2d(texcoords[c], texcoords[c+1]);
+				glTexCoord2f(player.object->UV_vertex[player.object->texture_faces[index] - 1].x , player.object->UV_vertex[player.object->texture_faces[index] - 1].y); //player.object->vertex[player.object->vertex_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 1] * 0.1 * player.scale);
+			//glNormal3f(player.object->normals[player.object->texture_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->normals[player.object->texture_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->normals[player.object->texture_faces[index] * 3 - 1] * 0.1 * player.scale);
+				 glNormal3f(player.object->normals[player.object->normals_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->normals[player.object->normals_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->normals[player.object->normals_faces[index] * 3 - 1] * 0.1 * player.scale);
+		//	glVertex3f(player.object->vertex[player.object->texture_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->texture_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->vertex[player.object->texture_faces[index] * 3 - 1] * 0.1 * player.scale);
+				glVertex3f(player.object->vertex[player.object->vertex_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 1] * 0.1 * player.scale);
 			
-		}
+				index++;
+			
+			}
 		glEnd();
+		//glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	//glPopMatrix();
-
+	
+	//glDisableClientState(GL_VERTEX_ARRAY);
 	glDisable(GL_LIGHTING);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	glEndList();
+
+	player.object->normals.clear();
+	player.object->vertex.clear();
+	player.object->vertex_faces.clear();
+	player.object->normals_faces.clear();
+	player.object->UV_vertex.clear();
+
+	lists.push_back(num);
 }
 
 #define MAIN_SCALER 1.0
 void MainGame::render() {
-	//glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluPerspective(45, (double)_screenWidth / _screenHeight, 1.0, 500.0);
-	//glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
 
 	gluLookAt(player.camera.x, player.camera.y, player.camera.z, player.camera.x + player.camera.lx, player.camera.y + player.camera.ly, player.camera.z + player.camera.lz, 0.f, 1.f, 0.f);
 	glTranslatef(player.camera.moveX * MAIN_SCALER, player.camera.moveY * MAIN_SCALER, player.camera.moveZ * MAIN_SCALER);
 
 	drawSkybox(510.0f);
 	Render_Floor();
-	drawPlayer();
+	//drawPlayer();
+	glPushMatrix();
+	glTranslatef(player.coords.x * player.scale, player.coords.y * player.scale, player.coords.z * player.scale);
+	glRotatef(player.coords.angle, 0, 1, 0);
+	glCallList(lists[0]);
+	glPopMatrix();
 
 	SDL_GL_SwapWindow(_window);
 }
@@ -228,28 +252,9 @@ void MainGame::render() {
 	 player.camera.deltaAngleY = y  * 0.01f;
 
 	 player.camera.lx = sin(player.camera.angle + player.camera.deltaAngle);
-	 //cout << "y angle : " << player.camera.ly * 180/PI << endl;// tan(player.camera.angley + player.camera.deltaAngleY) * 180 / PI << endl;
-/// if (abs(tan(player.camera.angley + player.camera.deltaAngleY) * 180 / PI) >= 180)
-	//	 player.camera.ly = -179;
-	 //else
-//	 if (abs(player.camera.ly * 180 / PI) >= 179)
-		 player.camera.ly = -179 * PI / 180;
-	// else
 	 player.camera.ly = -tan(player.camera.angley + player.camera.deltaAngleY);
-
 	 player.camera.lz = -cos(player.camera.angle + player.camera.deltaAngle);
 
-	/// player.camera.angle += 5.;
-
-	/* float tempx = player.coords.x;
-	 player.coords.x = 0;
-
-	 
-	 player.coords.angle = x > player.camera.xPrev ? player.coords.angle - .5 : player.coords.angle + .5;
-	 player.coords.x = tempx;
-
-
-	 player.camera.xPrev = x;*/
 
 
  }
@@ -314,98 +319,20 @@ void MainGame::render() {
 			 {
 				 player.camera.isStuck = false;
 				 return  player.camera.ly / length * player.camera.velocity;
-				// return false;
 			 }
 			 else
 			 {
 				 player.camera.isStuck = true;
-				// return true;
 			 }
 		 }
 	 }
 	 else
 	 {
-		// _Camera.moveY -= _Camera.ly / length * _Camera.velocity;
 		 player.camera.isStuck = false;
-		// return false;
 		 return  player.camera.ly / length * player.camera.velocity;
 	 }
 
 	 return 0.f;
- }
-
- void MainGame::cameraCanMove()
- {
-	 GLfloat length = sqrt(player.camera.lx * player.camera.lx + player.camera.ly * player.camera.ly + player.camera.lz * player.camera.lz);
-
-	//if( collisionPointPlane(0., 1., 0., 0., 0., 10.0, 10.0))
-		//_Camera.moveY -= _Camera.ly / length * _Camera.velocity;
-
-	/* GLfloat length = sqrt(_Camera.lx * _Camera.lx + _Camera.ly * _Camera.ly + _Camera.lz * _Camera.lz);
-
-	 if (_Camera.moveX >= -10.0 && _Camera.moveX <= 0 && _Camera.moveZ >= -10.0f && _Camera.moveZ <= 0)
-	 {
-		 float nX, nY, nZ;
-		 bool more;
-		 if (sqrt(pow((_Camera.moveX - 0), 2) + pow((_Camera.moveY - 1), 2) + pow((_Camera.moveZ - 0), 2)) < sqrt(pow((_Camera.moveX - 0), 2) + pow((_Camera.moveY - (-1)), 2) + pow((_Camera.moveZ - 0), 2)))
-		 {
-			 //std::cout << "distance to 0;-1;0 is shorter" << std::endl;
-			 nX = 0.;
-			 nY = -1.;
-			 nZ = 0.;
-			 more = true;
-		 }
-		 else
-		 {
-			// std::cout << "distance to 0;1;0 is shorter" << std::endl;
-			 nX = 0.;
-			 nY = 0.01;
-			 nZ = 0.;
-			 more = false;
-		 }
-
-		// std::cout << "distance to plane: " << float(fabs(_Camera.moveX * nX + _Camera.moveY * 1 + _Camera.moveZ * nZ) + nY) << std::endl;
-
-		 if (_Camera.isStuck)
-		 {
-			 float angle = acos((_Camera.lx * nX + _Camera.ly* nY + _Camera.lz * nZ) / (1 * sqrt(_Camera.lx * _Camera.lx + _Camera.ly * _Camera.ly + _Camera.lz * _Camera.lz))) * 180 / PI;
-			// std::cout << "angle is " << angle << " degrees" << std::endl;
-
-			 //float _y = _Camera.ly / length * _Camera.velocity;
-			 if (!more)
-			 {
-				 //std::cout << "angle should be grater than 90 degrees" << std::endl;
-				 if (angle < 90)
-				 {
-					 _Camera.moveY -= _Camera.ly / length * _Camera.velocity;
-					 _Camera.isStuck = false;
-				 }
-			 }
-			 else
-			 {
-				// std::cout << "angle should be less than 90 degrees" << std::endl;
-				 if (angle < 90)
-				 {
-					 _Camera.moveY -= _Camera.ly / length * _Camera.velocity;
-					 _Camera.isStuck = false;
-				 }
-			 }
-
-		 }
-		 else {
-			 if (float(fabs(_Camera.moveX * nX + _Camera.moveY * 1 + _Camera.moveZ * nZ) + nY) > 0.1)
-			 {
-				 _Camera.moveY -= _Camera.ly / length * _Camera.velocity;
-			 }
-			 else
-				 _Camera.isStuck = true;
-		 }
-	 }
-	 else
-	 {
-		 _Camera.moveY -= _Camera.ly / length * _Camera.velocity;
-		 _Camera.isStuck = false;
-	 }*/
  }
 
  void MainGame::cameraMove(char dir)
@@ -415,18 +342,9 @@ void MainGame::render() {
 	 case SDLK_w:
 	 {
 		player.camera.moveX -= player.camera.lx / length * player.camera.velocity;
-
 		player.coords.x += player.camera.lx / length * player.camera.velocity;
-
-
-		//std::cout << "x: " << _Camera.moveX << " z: " << _Camera.moveZ << std::endl;
-		
-	//	player.camera.moveY -= collisionPointPlane(0., 1., 0., 0., 0., 100.0, 100.0);
-
 		player.camera.moveZ -= player.camera.lz / length * player.camera.velocity;
 		player.coords.z += player.camera.lz / length * player.camera.velocity;
-
-		//player.coords.z -= player.coords.z * sin(player.coords.angle) / length * player.camera.velocity;//player.coords.x * sin(player.coords.angle) + player.coords.z * cos(player.coords.angle);
 
 		break;
 	 }
@@ -434,7 +352,6 @@ void MainGame::render() {
 	 {
 		player.camera.moveX += player.camera.lx / length * player.camera.velocity;
 		player.coords.x -= player.camera.lx / length * player.camera.velocity;
-		//player.camera.moveY += collisionPointPlane(0., 1., 0., 0., 0., 100.0, 100.0);//= _Camera.ly / length * _Camera.velocity;
 		player.camera.moveZ += player.camera.lz / length * player.camera.velocity;
 		player.coords.z -= player.camera.lz / length * player.camera.velocity;
 
@@ -442,26 +359,16 @@ void MainGame::render() {
 	 }
 	 case SDLK_d:
 	 {
-		//player.camera.moveX += player.camera.lz / length * player.camera.velocity;
-		//player.coords.x -= player.camera.lx / length * player.camera.velocity;
-		//player.camera.moveZ -= player.camera.lx / length * player.camera.velocity;
-		//player.coords.z += player.camera.lz / length * player.camera.velocity;
+
 		float tempx = player.coords.x;
 		player.coords.x = 0;
 		player.coords.angle -= .5;
 		player.coords.x = tempx;
 
-		//player.coords.normalX += cos(player.coords.angle) * cos(player.coords.angle);
-		//player.coords.normalZ += sin(player.coords.angle) * sin(player.coords.angle);
-
 		break;
 	 }
 	 case SDLK_a:
 	 {
-		//player.camera.moveX -= player.camera.lz / length * player.camera.velocity;
-		//player.coords.x += player.camera.lx / length * player.camera.velocity;
-		//player.camera.moveZ += player.camera.lx / length * player.camera.velocity;
-		//player.coords.z -= player.camera.lz / length * player.camera.velocity;
 		float tempx = player.coords.x;
 		player.coords.x = 0;
 		player.coords.angle += .5;
@@ -476,12 +383,12 @@ void MainGame::render() {
 
  void MainGame::initSkybox() {
 	
-	 skybox[SKY_LEFT] = _loader.LoadTexture("resources\\textures\\skybox\\sky_left.bmp", false);
-	 skybox[SKY_BACK] = _loader.LoadTexture("resources\\textures\\skybox\\sky_back.bmp", false);
-	 skybox[SKY_RIGHT] = _loader.LoadTexture("resources\\textures\\skybox\\sky_right.bmp", false);
-	 skybox[SKY_FRONT] = _loader.LoadTexture("resources\\textures\\skybox\\sky_front.bmp", false);
-	 skybox[SKY_TOP] = _loader.LoadTexture("resources\\textures\\skybox\\sky_top.bmp", false);
-	 skybox[SKY_BOTTOM] = _loader.LoadTexture("resources\\textures\\skybox\\sky_bottom.bmp", false);
+	 skybox[SKY_LEFT] = _loader->LoadTexture("resources\\textures\\skybox\\sky_left.bmp", false);
+	 skybox[SKY_BACK] = _loader->LoadTexture("resources\\textures\\skybox\\sky_back.bmp", false);
+	 skybox[SKY_RIGHT] = _loader->LoadTexture("resources\\textures\\skybox\\sky_right.bmp", false);
+	 skybox[SKY_FRONT] = _loader->LoadTexture("resources\\textures\\skybox\\sky_front.bmp", false);
+	 skybox[SKY_TOP] = _loader->LoadTexture("resources\\textures\\skybox\\sky_top.bmp", false);
+	 skybox[SKY_BOTTOM] = _loader->LoadTexture("resources\\textures\\skybox\\sky_bottom.bmp", false);
  }
 
  void MainGame::killSkybox() {
@@ -568,41 +475,28 @@ void MainGame::render() {
 	 glEnd();
 
 	 glBindTexture(GL_TEXTURE_2D, 0);
-	 //glBindTexture(GL_TEXTURE_2D, 0);
-	 glEnable(GL_LIGHTING);
-	 glEnable(GL_LIGHT0);
-	 glEnable(GL_DEPTH_TEST);
-	 //glDisable(GL_TEXTURE_2D);
-	 //glPopMatrix();
+	  glEnable(GL_DEPTH_TEST);
+
  }
 
-void MainGame::Render_Floor()
-{
+ void MainGame::Render_Floor()
+ {
 
-	glDisable(GL_LIGHTING);
+	 glBindTexture(GL_TEXTURE_2D, texture_id[0]);
 
-	glColor3f(0.0f, 0.9f, 0.0f);
+	 glBegin(GL_QUADS);
+	 glNormal3f(0.0, -1.0, 0.0);
 
-	glBindTexture(GL_TEXTURE_2D, texture_id[0]);
+	 glTexCoord2f(0.0f, 0.0f);
+	 glVertex3f(0.0f, 0.0f, 0.0f);
+	 glTexCoord2f(0.0f, 100.0f);
+	 glVertex3f(0.0f, 0.0f, 100.0f);
+	 glTexCoord2f(100.0f, 100.0f);
+	 glVertex3f(100.0f, 0.0f, 100.0f);
+	 glTexCoord2f(100.0f, 0.0f);
+	 glVertex3f(100.0f, 0.0f, 0.0f);
 
-	glBegin(GL_QUADS);
-	glNormal3f(0.0, 1.0, 0.0);
+	 glEnd();
 
-	
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glTexCoord2f(0.0f, 100.0f);
-	glVertex3f(0.0f, 0.0f, 100.0f);
-	glTexCoord2f(100.0f, 100.0f);
-	glVertex3f(100.0f, 0.0f, 100.0f);
-	glTexCoord2f(100.0f, 0.0f);
-	glVertex3f(100.0f, 0.0f, 0.0f);
-
-	glEnd();
-
-	glColor3f(1.0f, 1.0f, 1.0f);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glEnable(GL_LIGHTING);
-}
+	 glBindTexture(GL_TEXTURE_2D, 0);
+ }

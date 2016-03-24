@@ -12,13 +12,21 @@ ObjectLoader::~ObjectLoader()
 {
 }
 
-using namespace std;
-
-
-//int chunk[6];
-void ObjectLoader::print()
+string ObjectLoader::replaceSpaces(string temp)
 {
-	std::cout << "1111" << std::endl;
+	int length = temp.size();
+	int x = 0;
+	string fixed;
+
+	while (x != length)
+	{
+		string letter = temp.substr(x, 1);
+		if (letter == " ")
+			letter = "-";
+		fixed = fixed + letter;
+		x++;
+	}
+	return fixed;
 }
 
 Object ObjectLoader::ReadObjectGeometry(const char* Filename)
@@ -29,11 +37,10 @@ Object ObjectLoader::ReadObjectGeometry(const char* Filename)
 
 	fstream F;
 
-	//string geometry;
-	//strcpy(geometry.c_str(), Filename);
-	//	+ ".obj\n";
+	string a = Filename;
+	string geometry = a + ".obj";
 
-	F.open(Filename, ios::in);
+	F.open(geometry, ios::in);
 
 	if (!F)
 	{
@@ -132,7 +139,9 @@ Object ObjectLoader::ReadObjectGeometry(const char* Filename)
 
 	F.close();
 
-	/*F.open(Filename, ios::in);
+	string materials = a + ".mtl";
+
+	F.open(materials, ios::in);
 
 	if (!F)
 	{
@@ -140,44 +149,46 @@ Object ObjectLoader::ReadObjectGeometry(const char* Filename)
 		return object;
 	}
 
-	int counter = 0;
-	bool newSection = false;
+    newSection = false;
 	bool isMat = false;
 	float amb[3], dif[3], spec[3], alpha, ns, ni;
 	int illum;
 	unsigned int texture;
 	char matName[200];
 
-
-	while (getline(F, s))
+	while (getline(F, s, '\t'))
 	{
-
+	
 		strcpy(buffer, s.c_str());
-
 
 		if ((buffer[0] == 'n') && (buffer[1] == 'e' && (buffer[2] == 'w')))
 		{
-
-			if (isMat)
-			{
-				//object.materials.push_back({amb, dif, spec, alpha, ns, ni, illum, texture });
-				//object.materials.push_back({amb, dif});
-				
-			}
-			else
-			{
-
-			}
+			newSection = true;
 		}
-	}*/
+		else if (strstr(buffer, "map_Ka"))
+		{
+			//NEEDS TO REMOVE DOUBLE AND MULTIPLE SPACES + CONVERTING TO BMP
+			sscanf(buffer, "map_Ka %s", matName);
+			string temp = buffer;
+			temp.erase(0, 7); //"map_Ka" + ' ' = 7 chars
+
+			temp = temp.substr(0, temp.length() - 4);
+			temp += "bmp";
+			temp = replaceSpaces(temp);
+
+			string texturePath = "resources\\objects\\" + temp;
+			std::cout << texturePath << endl;
+			object.textures_name.push_back(texturePath);
+		}
+	}
+
+	F.close();
+	
 
 	for (int i = 0; i < object.mat_name.size(); i++)
 	{
 		std::cout << object.mat_name[i] << " index: " << object.mat_start[i] << std::endl;
-
 	}
-
-	std::cout << object.UV_vertex.size() << endl;//" | " << object.vertex_faces.size() << std::endl;
 
 	std::cout << "Object successfully loaded" << std::endl;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object.h"
+#include "TextureLoader.h"
 
 class ObjectLoader
 {
@@ -8,9 +9,11 @@ public:
 	ObjectLoader();
 	~ObjectLoader();
 
-	void print();
 	Object ReadObjectGeometry(const char* Filename);
 	Object object;
 
+
+private:
+	string replaceSpaces(string temp);
 };
 
