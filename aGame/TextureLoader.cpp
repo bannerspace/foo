@@ -24,7 +24,7 @@ unsigned int TextureLoader::LoadTexture(const char *Filename, bool repeat)
 	SDL_Surface *img = SDL_LoadBMP(Filename);
 	if (!img)
 	{
-		std::cout << "Unable to load img" << std::endl;
+		std::cout << "Unable to load image" << std::endl;
 	}
 
 	glBindTexture(GL_TEXTURE_2D, num);

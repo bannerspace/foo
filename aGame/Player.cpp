@@ -1,72 +1,112 @@
 #include "Player.h"
 #include <GL/glew.h>
 #include <GL/glut.h>
-//#include <gl/GLU.h>
 #include <iostream>
+#include <algorithm>
 
 Player::Player()
-{
+{	
+	try
+	{
+		position = { { 0., 0., 0. }, 0., -1, 0, 0 };
+		scale = 1.0f;
+		//playerState = PlayerState::ALIVE;
+		camera = new Camera();
+		if (!camera)
+			throw "Can't create player's camera object";
 
-	coords = { 0., 0., 0., 0., -1, 0, 0 };
-	scale = 1.0f;
-	playerState = PlayerState::ALIVE;
-	
-	ObjectLoader loader;
-	//loader.print();
-	object = new Object (loader.ReadObjectGeometry("E:\\Users\\Banner\\Desktop\\aGame\\aGame\\resources\\objects\\Captain America"));
+		ObjectLoader loader;
+		object = loader.ReadObjectGeometry("E:\\Users\\Banner\\Desktop\\aGame\\aGame\\resources\\objects\\Captain America");
 
+		if (!object)
+		{
+			throw "Can't load player's geometry";
+		}
+		boundingBox.isShowing = false;
+		CalculateSize();
+	}
+	catch (const char* error)
+	{
+		object = NULL;
+		std::cout << error << std::endl;
+	}
 
-
-	if (!object)
-		std::cout << "Can't load player's geometry" << std::endl;
-	//else
-		//alive();
 }
-
 
 Player::~Player()
 {
 }
 
-void Player::alive(){
-	while (playerState != PlayerState::DEAD && object)
+
+void Player::CalculateSize()
+{
+	//x.push_back(object->vertex[0].x);
+	float xMax = object->vertex[0].x;
+	float xMin = xMax;
+
+	float yMax = object->vertex[0].y;
+	float yMin = yMax;
+
+	float zMax = object->vertex[0].z;
+	float zMin = zMax;
+	//boundingBox.width = max_element(std::begin(object->vertex))
+	for (int i = 0; i < object->vertex.size(); i++)
 	{
-		draw();
-	}
-}
+		if (xMax < object->vertex[i].x)
+			xMax = object->vertex[i].x;
+		if (xMin > object->vertex[i].x)
+			xMin = object->vertex[i].x;
 
-void Player::draw() {
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		if (yMax < object->vertex[i].y)
+			yMax = object->vertex[i].y;
+		if (yMin > object->vertex[i].y)
+			yMin = object->vertex[i].y;
 
-	//glMatrixMode(GL_PROJECTION);
-	//glLoadIdentity();
-	//gluPerspective(45, (double)_screenWidth / _screenHeight, 1.0, 500.0);
-	//glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
-
-	glPushMatrix();
-
-	glTranslatef(coords.x * scale, coords.y * scale, coords.z * scale);
-	glRotatef(coords.angle, 0, 1, 0);
-
-	int index = 0;
-
-	for (int face = 0; face <= object->vertex_faces.size()- 1; face += 3)
-	{
-		glBegin(GL_TRIANGLES);
-		glColor3f(1.0, 1.0, 0.5);
-
-		for (int vertex = 0; vertex < 3; vertex++)
-		{
-			glNormal3f(object->normals[object->normals_faces[index] * 3 - 3] * 0.1 * scale, object->normals[object->normals_faces[index] * 3 - 2] * 0.1 * scale,
-				object->normals[object->normals_faces[index] * 3 - 1] * 0.1 * scale);
-			glVertex3f(object->vertex[object->vertex_faces[index] * 3 - 3] * 0.1 * scale, object->vertex[object->vertex_faces[index] * 3 - 2] * 0.1 * scale,
-				object->vertex[object->vertex_faces[index] * 3 - 1] * 0.1 * scale);
-			index++;
-		}
-		glEnd();
+		if (zMax < object->vertex[i].z)
+			zMax = object->vertex[i].z;
+		if (zMin > object->vertex[i].z)
+			zMin = object->vertex[i].z;
 	}
 
-	glPopMatrix();
+	boundingBox.width = abs(xMax - xMin);
+	boundingBox.height = abs(yMax - yMin);
+	boundingBox.depth = abs(zMax - zMin);
+
+	boundingBox.x = xMin;
+	boundingBox.y = yMin;
+	boundingBox.z = zMin;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
+
+	boundingBox.coords[0].x = 0;
+	boundingBox.coords[0].y = 0;
+	boundingBox.coords[0].z = 0;
 
 }
+

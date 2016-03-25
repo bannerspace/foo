@@ -22,6 +22,7 @@ Camera::Camera()
 	direction = '\0';
 	velocity = 0.1f;
 	isStuck = false;
+	isFreeMoving = false;
 }
 
 

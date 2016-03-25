@@ -5,15 +5,13 @@
 
 class ObjectLoader
 {
+	TextureLoader textureLoader;
 public:
 	ObjectLoader();
 	~ObjectLoader();
 
-	Object ReadObjectGeometry(const char* Filename);
-	Object object;
+	Object *ReadObjectGeometry(const char* Filename);
+	Object *object;
 
-
-private:
-	string replaceSpaces(string temp);
 };
 

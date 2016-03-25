@@ -3,7 +3,6 @@
 #include <string>
 #include <stdio.h>
 #include "ObjectLoader.h"
-#include "Player.h" 
 
 #define PI 3.14159265359
 
@@ -63,15 +62,21 @@ void MainGame::initSystems() {
 
 
 	initSkybox();
+
+	player = new Player();
+	if (!player->object)
+	{
+		cout << "player can't be created" << endl;
+	}
+	else
+	{
+		drawPlayer();
+	}
+
 	_loader = new TextureLoader();
 	texture_id[0] = _loader->LoadTexture("resources\\textures\\ground.bmp", true);
+
 	////////////////////////COLLISION IS IN CPLUSPLUSGUT TUTS!!!!!!!!!!!!!!!!!!!
-	for (int i = 0; i < player.object->textures_name.size(); i++)
-	{
-		player.object->textures.push_back(_loader->LoadTexture(player.object->textures_name[i].c_str(),false));
-	}
-	drawPlayer();
-	
 }
 
 
@@ -82,9 +87,9 @@ void MainGame::gameLoop() {
 		processInput();
 		render();
 
-		if (player.camera.cameraMove)
+		if ( player->camera->cameraMove)
 		{
-			cameraMove(player.camera.direction);
+			cameraMove( player->camera->direction);
 		}
 	}
 }  
@@ -106,23 +111,44 @@ void MainGame::processInput() {
 			}
 			case SDL_MOUSEWHEEL:
 			{
-				 player.camera.x += event.wheel.y;
-				 player.camera.z += event.wheel.y;
+				  player->camera->x += event.wheel.y;
+				  player->camera->z += event.wheel.y;
 				break;
 			}
 	 		case SDL_KEYDOWN:
 			{
 				if (event.key.keysym.sym == SDLK_w || event.key.keysym.sym == SDLK_s || event.key.keysym.sym == SDLK_a || event.key.keysym.sym == SDLK_d)
 				{
-					player.camera.direction = event.key.keysym.sym;
-					player.camera.cameraMove = true;
+					 player->camera->direction = event.key.keysym.sym;
+					 player->camera->cameraMove = true;
 				}
+				else if (event.key.keysym.sym == SDLK_f)
+				{
+
+					player->camera->isFreeMoving = !player->camera->isFreeMoving; // free camera positioning
+
+					if (player->camera->isFreeMoving)
+						cout << "--Free camera positioning mode is enabled" << endl;
+					else
+						cout << "--Free camera positioning mode is disabled" << endl;
+				}
+				else if (event.key.keysym.sym == SDLK_b)
+				{
+
+					//player->boundingBox.isShowing = !player->boundingBox.isShowing;
+
+					//if (player->boundingBox.isShowing)
+					//	cout << "--Bounding box showing is enabled" << endl;
+					//else
+					//	cout << "--Bounding box showing is disabled" << endl;
+				}
+
 				break;
 			}
 			case SDL_KEYUP:
 			{
-				 player.camera.cameraMove = false;
-				 player.camera.direction = '\0';
+				  player->camera->cameraMove = false;
+				  player->camera->direction = '\0';
 				break;
 			}
 		default:
@@ -144,15 +170,15 @@ void MainGame::drawPlayer()
 	/*
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(player.object->vertex), &player.object->vertex, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof( player->object->vertex), & player->object->vertex, GL_STATIC_DRAW);
 	
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);*/
 	//glLoadIdentity();
 	//glEnableClientState(GL_VERTEX_ARRAY);
 	//glEnableClientState(GL_COLOR_ARRAY);
 
-	//glVertexPointer(3, GL_FLOAT, 0, &player.object->vertex);
-	//glDrawArrays(GL_TRIANGLES, 0, player.object->vertex.size()/3);
+	//glVertexPointer(3, GL_FLOAT, 0, & player->object->vertex);
+	//glDrawArrays(GL_TRIANGLES, 0,  player->object->vertex.size()/3);
 	
 
 
@@ -163,50 +189,93 @@ void MainGame::drawPlayer()
 	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glEnable(GL_NORMALIZE);
 
-	GLfloat position[] = { player.coords.x, fabs(player.camera.moveY * 2), player.coords.z , 1.0 };
-	GLfloat vector[] = { player.coords.x, fabs(player.camera.moveY), player.coords.z };
+	GLfloat position[] = {  player->position.coords.x, fabs( player->camera->moveY * 2),  player->position.coords.z , 1.0 };
+	GLfloat vector[] = {  player->position.coords.x, fabs( player->camera->moveY),  player->position.coords.z };
 
-	//+glBindTexture(GL_TEXTURE_2D, player.object->texture);
+	//+glBindTexture(GL_TEXTURE_2D,  player->object->texture);
 
 	glLightfv(GL_LIGHT0, GL_POSITION, position);
 	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, vector);
 
-	glTranslatef(player.coords.x * player.scale, player.coords.y * player.scale, player.coords.z * player.scale);
-	glRotatef(player.coords.angle, 0, 1, 0);
+//	glTranslatef( player->position.coords.x *  player->scale,  player->position.coords.y *  player->scale,  player->position.coords.z *  player->scale);
+//	glRotatef( player->position.angle, 0, 1, 0);
 
 	int index = 0;
 	int mats = 0;
 
 	float texcoords[] = { 0., 0., 0., 1., 1., 1. };
 
-	for (int face = 0; face < player.object->vertex_faces.size(); face += 3)
+	for (int face = 0; face <  player->object->vertex_faces.size(); face += 3)
 	{
-		if (player.object->mat_start.size() > 1 && player.object->mat_start.size() > mats+1)
-			if (face > player.object->mat_start[mats+1])
+		if ( player->object->mat_start.size() > 1 &&  player->object->mat_start.size() > mats+1)
+			if (face >  player->object->mat_start[mats+1])
 			{
 				mats++;
 			}
-		glBindTexture(GL_TEXTURE_2D, player.object->textures[mats]);
+		glBindTexture(GL_TEXTURE_2D,  player->object->textures[mats]);
 
 		glBegin(GL_TRIANGLES);
 
 			for (int vertex = 0, c = 0; vertex < 3; vertex++, c+=2)
 			{
-				//if (player.object->facesHasTex[index])
-				//glTexCoord2d(texcoords[c], texcoords[c+1]);
-				glTexCoord2f(player.object->UV_vertex[player.object->texture_faces[index] - 1].x , player.object->UV_vertex[player.object->texture_faces[index] - 1].y); //player.object->vertex[player.object->vertex_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 1] * 0.1 * player.scale);
-			//glNormal3f(player.object->normals[player.object->texture_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->normals[player.object->texture_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->normals[player.object->texture_faces[index] * 3 - 1] * 0.1 * player.scale);
-				 glNormal3f(player.object->normals[player.object->normals_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->normals[player.object->normals_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->normals[player.object->normals_faces[index] * 3 - 1] * 0.1 * player.scale);
-		//	glVertex3f(player.object->vertex[player.object->texture_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->texture_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->vertex[player.object->texture_faces[index] * 3 - 1] * 0.1 * player.scale);
-				glVertex3f(player.object->vertex[player.object->vertex_faces[index] * 3 - 3] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 2] * 0.1 * player.scale, player.object->vertex[player.object->vertex_faces[index] * 3 - 1] * 0.1 * player.scale);
-			
+				glTexCoord2f( player->object->UV_vertex[player->object->texture_faces[index] - 1].x , player->object->UV_vertex[ player->object->texture_faces[index] - 1].y); 
+				glNormal3f(player->position.coords.x + player->object->normals[player->object->normals_faces[index] - 1].x * 0.1 * player->scale, player->position.coords.y + player->object->normals[player->object->normals_faces[index] - 1].y * 0.1 *  player->scale, player->position.coords.z + player->object->normals[player->object->normals_faces[index] - 1].z * 0.1 * player->scale);
+				glVertex3f(player->position.coords.x + player->object->vertex[player->object->vertex_faces[index] - 1].x * 0.1 * player->scale, player->position.coords.y + player->object->vertex[player->object->vertex_faces[index] - 1].y * 0.1 *  player->scale, player->position.coords.z + player->object->vertex[player->object->vertex_faces[index] - 1].z * 0.1 * player->scale);
 				index++;
-			
 			}
 		glEnd();
-		//glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	glLineWidth(5.0f);
+	glColor3f(0, 0, 1);
+
+	glBegin(GL_LINES);
+	glVertex3f(player->position.coords.x + player->boundingBox.x * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + player->boundingBox.x * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z) * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + player->boundingBox.x * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + player->boundingBox.x * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z) * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z) * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + player->boundingBox.z  * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z)  * 0.1 * player->scale);
+
+
+	glColor3f(0, 1, 0);
+	
+	glVertex3f(player->position.coords.x + player->boundingBox.x * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + player->boundingBox.x * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + player->boundingBox.z * 0.1 * player->scale);
+
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z)  * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z)  * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + player->boundingBox.x  * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z)  * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + player->boundingBox.x  * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z)  * 0.1 * player->scale);
+	
+
+	glColor3f(1, 0, 0);
+
+	glVertex3f(player->position.coords.x + player->boundingBox.x  * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + player->boundingBox.z  * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + player->boundingBox.z  * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + player->boundingBox.x  * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z) * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z) * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + player->boundingBox.x  * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + player->boundingBox.z  * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + player->boundingBox.z  * 0.1 * player->scale);
+	
+	glVertex3f(player->position.coords.x + player->boundingBox.x  * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z) * 0.1 * player->scale);
+	glVertex3f(player->position.coords.x + (player->boundingBox.x + player->boundingBox.width) * 0.1 * player->scale, player->position.coords.y + player->boundingBox.height * 0.1 * player->scale, player->position.coords.z + (player->boundingBox.depth + player->boundingBox.z)  * 0.1 * player->scale);
+	glEnd();
+
+	glColor3f(1, 1, 1);
 	
 	//glDisableClientState(GL_VERTEX_ARRAY);
 	glDisable(GL_LIGHTING);
@@ -214,11 +283,11 @@ void MainGame::drawPlayer()
 
 	glEndList();
 
-	player.object->normals.clear();
-	player.object->vertex.clear();
-	player.object->vertex_faces.clear();
-	player.object->normals_faces.clear();
-	player.object->UV_vertex.clear();
+	 player->object->normals.clear();
+	 player->object->vertex.clear();
+	 player->object->vertex_faces.clear();
+	 player->object->normals_faces.clear();
+	 player->object->UV_vertex.clear();
 
 	lists.push_back(num);
 }
@@ -229,45 +298,46 @@ void MainGame::render() {
 
 	glLoadIdentity();
 
-	gluLookAt(player.camera.x, player.camera.y, player.camera.z, player.camera.x + player.camera.lx, player.camera.y + player.camera.ly, player.camera.z + player.camera.lz, 0.f, 1.f, 0.f);
-	glTranslatef(player.camera.moveX * MAIN_SCALER, player.camera.moveY * MAIN_SCALER, player.camera.moveZ * MAIN_SCALER);
+	gluLookAt( player->camera->x,  player->camera->y,  player->camera->z,  player->camera->x +  player->camera->lx,  player->camera->y +  player->camera->ly,  player->camera->z +  player->camera->lz, 0.f, 1.f, 0.f);
+	glTranslatef( player->camera->moveX * MAIN_SCALER,  player->camera->moveY * MAIN_SCALER,  player->camera->moveZ * MAIN_SCALER);
 
 	drawSkybox(510.0f);
-	Render_Floor();
-	//drawPlayer();
-	glPushMatrix();
-	glTranslatef(player.coords.x * player.scale, player.coords.y * player.scale, player.coords.z * player.scale);
-	glRotatef(player.coords.angle, 0, 1, 0);
-	glCallList(lists[0]);
-	glPopMatrix();
+	drawFloor();
+
+	if (player->object)
+	{
+		//drawPlayer();
+		glPushMatrix();
+		glTranslatef(player->position.coords.x * player->scale, player->position.coords.y * player->scale, player->position.coords.z * player->scale);
+		glRotatef(player->position.angle, 0, 1, 0);
+		glCallList(lists[0]);
+		glPopMatrix();
+	}
+
 
 	SDL_GL_SwapWindow(_window);
 }
 
  void MainGame::mouseMove(int x, int y)
 {
+	  player->camera->deltaAngle = (x -  player->camera->xOrigin) * 0.01f;
+	  player->camera->deltaAngle = (x -  player->camera->xOrigin) * 0.01f;
+	  player->camera->deltaAngleY = y  * 0.01f;
 
-	 player.camera.deltaAngle = (x - player.camera.xOrigin) * 0.01f;
-	 player.camera.deltaAngle = (x - player.camera.xOrigin) * 0.01f;
-	 player.camera.deltaAngleY = y  * 0.01f;
-
-	 player.camera.lx = sin(player.camera.angle + player.camera.deltaAngle);
-	 player.camera.ly = -tan(player.camera.angley + player.camera.deltaAngleY);
-	 player.camera.lz = -cos(player.camera.angle + player.camera.deltaAngle);
-
-
-
+	  player->camera->lx = sin( player->camera->angle +  player->camera->deltaAngle);
+	  player->camera->ly = -tan( player->camera->angley +  player->camera->deltaAngleY);
+	  player->camera->lz = -cos( player->camera->angle +  player->camera->deltaAngle);
  }
 
  float MainGame::collisionPointPlane(float normalX, float normalY, float normalZ, float x1, float z1, float x2, float z2)
  {
-	 GLfloat length = sqrt(player.camera.lx * player.camera.lx + player.camera.ly * player.camera.ly + player.camera.lz * player.camera.lz);
+	 GLfloat length = sqrt( player->camera->lx *  player->camera->lx +  player->camera->ly *  player->camera->ly +  player->camera->lz *  player->camera->lz);
 
-	 if (player.camera.moveX >= -x2 && player.camera.moveX <= x1 && player.camera.moveZ >= -z2 && player.camera.moveZ <= z1)
+	 if ( player->camera->moveX >= -x2 &&  player->camera->moveX <= x1 &&  player->camera->moveZ >= -z2 &&  player->camera->moveZ <= z1)
 	 {
 		 float nX, nY, nZ;
 		 bool more;
-		 if (sqrt(pow((player.camera.moveX - normalX), 2) + pow((player.camera.moveY - normalY), 2) + pow((player.camera.moveZ - normalZ), 2)) < sqrt(pow((player.camera.moveX - normalX), 2) + pow((player.camera.moveY - (-normalY)), 2) + pow((player.camera.moveZ - normalZ), 2)))
+		 if (sqrt(pow(( player->camera->moveX - normalX), 2) + pow(( player->camera->moveY - normalY), 2) + pow(( player->camera->moveZ - normalZ), 2)) < sqrt(pow(( player->camera->moveX - normalX), 2) + pow(( player->camera->moveY - (-normalY)), 2) + pow(( player->camera->moveZ - normalZ), 2)))
 		 {
 			// std::cout << "distance to 0;-1;0 is shorter" << std::endl;
 			 nX = normalX;
@@ -284,22 +354,22 @@ void MainGame::render() {
 			 more = false;
 		 }
 
-		 //std::cout << "distance to plane: " << float(fabs(_Camera.moveX * nX + _Camera.moveY * normalY + _Camera.moveZ * nZ) + nY) << std::endl;
+		 //std::cout << "distance to plane: " << float(fabs(_camera->moveX * nX + _camera->moveY * normalY + _camera->moveZ * nZ) + nY) << std::endl;
 
-		 if (player.camera.isStuck)
+		 if ( player->camera->isStuck)
 		 {
-			 float angle = acos((player.camera.lx * nX + player.camera.ly* nY + player.camera.lz * nZ) / (1 * sqrt(player.camera.lx * player.camera.lx + player.camera.ly * player.camera.ly + player.camera.lz * player.camera.lz))) * 180 / PI;
+			 float angle = acos(( player->camera->lx * nX +  player->camera->ly* nY +  player->camera->lz * nZ) / (1 * sqrt( player->camera->lx *  player->camera->lx +  player->camera->ly *  player->camera->ly +  player->camera->lz *  player->camera->lz))) * 180 / PI;
 			 //std::cout << "angle is " << angle << " degrees" << std::endl;
 
-			 //float _y = _Camera.ly / length * _Camera.velocity;
+			 //float _y = _camera->ly / length * _camera->velocity;
 			 if (!more)
 			 {
 				 //std::cout << "angle should be grater than 90 degrees" << std::endl;
 				 if (angle < 90)
 				 {
-					 player.camera.isStuck = false;
+					  player->camera->isStuck = false;
 					// return false;
-					 return  player.camera.ly / length * player.camera.velocity;
+					 return   player->camera->ly / length *  player->camera->velocity;
 				 }
 			 }
 			 else
@@ -308,28 +378,28 @@ void MainGame::render() {
 				 if (angle < 90)
 				 {
 					
-					 player.camera.isStuck = false;
-					 return  player.camera.ly / length * player.camera.velocity;
+					  player->camera->isStuck = false;
+					 return   player->camera->ly / length *  player->camera->velocity;
 				 }
 			 }
 
 		 }
 		 else {
-			 if (float(fabs(player.camera.moveX * nX + player.camera.moveY *normalY + player.camera.moveZ * nZ) + nY) > 0.1)
+			 if (float(fabs( player->camera->moveX * nX +  player->camera->moveY *normalY +  player->camera->moveZ * nZ) + nY) > 0.1)
 			 {
-				 player.camera.isStuck = false;
-				 return  player.camera.ly / length * player.camera.velocity;
+				  player->camera->isStuck = false;
+				 return   player->camera->ly / length *  player->camera->velocity;
 			 }
 			 else
 			 {
-				 player.camera.isStuck = true;
+				  player->camera->isStuck = true;
 			 }
 		 }
 	 }
 	 else
 	 {
-		 player.camera.isStuck = false;
-		 return  player.camera.ly / length * player.camera.velocity;
+		  player->camera->isStuck = false;
+		 return   player->camera->ly / length *  player->camera->velocity;
 	 }
 
 	 return 0.f;
@@ -337,42 +407,66 @@ void MainGame::render() {
 
  void MainGame::cameraMove(char dir)
  {
-	 GLfloat length = sqrt(player.camera.lx * player.camera.lx + player.camera.ly * player.camera.ly + player.camera.lz * player.camera.lz);
+	 GLfloat length = sqrt( player->camera->lx *  player->camera->lx +  player->camera->ly *  player->camera->ly +  player->camera->lz *  player->camera->lz);
 	 switch (dir) {
 	 case SDLK_w:
 	 {
-		player.camera.moveX -= player.camera.lx / length * player.camera.velocity;
-		player.coords.x += player.camera.lx / length * player.camera.velocity;
-		player.camera.moveZ -= player.camera.lz / length * player.camera.velocity;
-		player.coords.z += player.camera.lz / length * player.camera.velocity;
+		 player->camera->moveX -=  player->camera->lx / length *  player->camera->velocity;
+		 player->camera->moveZ -=  player->camera->lz / length *  player->camera->velocity;
+
+		 if (!player->camera->isFreeMoving)
+		 {
+			 player->position.coords.x += player->camera->lx / length *  player->camera->velocity;
+			 player->position.coords.z += player->camera->lz / length *  player->camera->velocity;
+		 }
 
 		break;
 	 }
 	 case SDLK_s:
 	 {
-		player.camera.moveX += player.camera.lx / length * player.camera.velocity;
-		player.coords.x -= player.camera.lx / length * player.camera.velocity;
-		player.camera.moveZ += player.camera.lz / length * player.camera.velocity;
-		player.coords.z -= player.camera.lz / length * player.camera.velocity;
+		 player->camera->moveX +=  player->camera->lx / length *  player->camera->velocity;
+		 player->camera->moveZ +=  player->camera->lz / length *  player->camera->velocity;
+
+		 if (!player->camera->isFreeMoving)
+		 {
+			 player->position.coords.x -= player->camera->lx / length *  player->camera->velocity;
+			 player->position.coords.z -= player->camera->lz / length *  player->camera->velocity;
+		 }
 
 		break;
 	 }
 	 case SDLK_d:
 	 {
+			if (player->camera->isFreeMoving)
+			{
+				player->camera->moveX += player->camera->lz / length * player->camera->velocity;
+				player->camera->moveZ -= player->camera->lx / length * player->camera->velocity;
+			}
+			else
+			{
 
-		float tempx = player.coords.x;
-		player.coords.x = 0;
-		player.coords.angle -= .5;
-		player.coords.x = tempx;
+				float tempx = player->position.coords.x;
+				player->position.coords.x = 0;
+				player->position.angle -= .5;
+				player->position.coords.x = tempx;
+			}
 
 		break;
 	 }
 	 case SDLK_a:
 	 {
-		float tempx = player.coords.x;
-		player.coords.x = 0;
-		player.coords.angle += .5;
-		player.coords.x = tempx;
+			if (player->camera->isFreeMoving)
+			{
+				player->camera->moveX -= player->camera->lz / length * player->camera->velocity;
+				player->camera->moveZ += player->camera->lx / length * player->camera->velocity;
+			}
+			else
+			{
+				float tempx = player->position.coords.x;
+				player->position.coords.x = 0;
+				player->position.angle += .5;
+				player->position.coords.x = tempx;
+			}
 		break;
 	 }
 	 default:
@@ -401,7 +495,6 @@ void MainGame::render() {
 	 glDisable(GL_DEPTH_TEST);
 	 glDisable(GL_LIGHT0);
 
-	// glPushMatrix();
 	 glBindTexture(GL_TEXTURE_2D, skybox[SKY_BACK]);
 	 glBegin(GL_QUADS);
 		 glTexCoord2f(0, 0);
@@ -479,7 +572,7 @@ void MainGame::render() {
 
  }
 
- void MainGame::Render_Floor()
+ void MainGame::drawFloor()
  {
 
 	 glBindTexture(GL_TEXTURE_2D, texture_id[0]);

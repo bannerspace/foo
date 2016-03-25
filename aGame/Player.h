@@ -16,20 +16,31 @@ public:
 
 	struct Coords {
 		float x, y, z;
+	};
+
+	struct Position {
+		Coords coords;
 		float angle;
 		float normalX, normalY, normalZ;
 	};
 
-	Coords coords;
+	struct BoundingBox {
+		float width, height, depth;
+		float x, y, z;
+		Coords coords[8];
+		bool isShowing;
+	};
+
+	Position position;
+	BoundingBox boundingBox;
 	PlayerState playerState;
 
-	void alive();
-	void draw();
-
 	Object *object;
-	Camera camera;
+	Camera *camera;
 	float scale;
 
-	TextureLoader _loader;
+private:
+	void CalculateSize();
+	//TextureLoader _loader;
 };
 

@@ -51,10 +51,10 @@ private:
 	//
 	void initGlew();
 	//
-	void Render_Floor();
+	void drawFloor();
 	void drawPlayer();
 
-	Player player;
+	Player *player;
 	SDL_Window *_window;
 	int _screenWidth;
 	int _screenHeight;

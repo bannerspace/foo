@@ -16,5 +16,6 @@ public:
 	char direction;
 	float velocity;
 	bool isStuck;
+	bool isFreeMoving;
 };
 
