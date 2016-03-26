@@ -21,13 +21,15 @@ public:
 	struct Position {
 		Coords coords;
 		float angle;
+		float tempAngle;
 		float normalX, normalY, normalZ;
+		bool isRotating;
 	};
 
 	struct BoundingBox {
 		float width, height, depth;
 		float x, y, z;
-		Coords coords[8];
+		Coords coords[24];
 		bool isShowing;
 	};
 

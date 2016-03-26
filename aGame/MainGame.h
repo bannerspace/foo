@@ -54,6 +54,11 @@ private:
 	void drawFloor();
 	void drawPlayer();
 
+	//
+	float rotate2DAboutPoint(float x, float z, float x0, float z0, float angle);
+	float rotate2D(float x, float z, float angle);
+	//
+
 	Player *player;
 	SDL_Window *_window;
 	int _screenWidth;
