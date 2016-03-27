@@ -6,25 +6,13 @@
 #include <gl/GLU.h>
 #include "TextureLoader.h"
 #include "Player.h"
-
+#include "CommandManager.h"
+#include "Camera.h"
 
 enum class GameState {PLAY, EXIT};
 
 class MainGame
 {
-	struct camera {
-		float lx, ly, lz;
-		float x, y, z;
-		float deltaAngle, deltaAngleY;
-		float angle, angley;
-		int xOrigin;
-		float moveX, moveY, moveZ;
-		bool cameraMove;
-		char direction;
-		float velocity;
-		bool isStuck;
-	};
-
 public:
 	MainGame();
 	~MainGame();
@@ -59,19 +47,24 @@ private:
 	float rotate2D(float x, float z, float angle);
 	//
 
+
 	Player *player;
 	SDL_Window *_window;
 	int _screenWidth;
 	int _screenHeight;
 	GameState _gameState;
-	camera _Camera;
 
 	vector<unsigned int> lists;
 
 	unsigned int vbo;
+	unsigned int indexvbo;
+	#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
-	TextureLoader *_loader;
+	TextureLoader *_loader;	
 
-	
+	struct asd
+	{
+		float x, y, z;
+	};
 };
 

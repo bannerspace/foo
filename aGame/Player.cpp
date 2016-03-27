@@ -12,6 +12,8 @@ Player::Player()
 		scale = .1f;
 		//playerState = PlayerState::ALIVE;
 		camera = new Camera();
+		camera->x -= 5.0f;
+
 		if (!camera)
 			throw "Can't create player's camera object";
 
@@ -24,6 +26,7 @@ Player::Player()
 		}
 		boundingBox.isShowing = false;
 		CalculateSize();
+		camera->radius = boundingBox.height / 2 / 2;
 	}
 	catch (const char* error)
 	{
@@ -71,6 +74,7 @@ void Player::CalculateSize()
 	boundingBox.width = abs(xMax - xMin);
 	boundingBox.height = abs(yMax - yMin);
 	boundingBox.depth = abs(zMax - zMin);
+
 
 	boundingBox.x = xMin;
 	boundingBox.y = yMin;

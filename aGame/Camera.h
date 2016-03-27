@@ -10,12 +10,14 @@ public:
 	float deltaAngle, deltaAngleY;
 	float angle, angley;
 	int xOrigin;
-	int xPrev;
+	int xOld, yOld;
 	float moveX, moveY, moveZ;
 	bool cameraMove;
 	char direction;
 	float velocity;
 	bool isStuck;
 	bool isFreeMoving;
+	bool isLocked;
+	float radius;
 };
 

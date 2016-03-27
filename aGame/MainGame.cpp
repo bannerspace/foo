@@ -3,6 +3,8 @@
 #include <string>
 #include <stdio.h>
 #include "ObjectLoader.h"
+#include <thread>
+
 
 #define PI 3.14159265359
 
@@ -29,11 +31,11 @@ MainGame::~MainGame()
 {
 }
 
-
 void MainGame::startGame() {
 	initSystems();
 	gameLoop();
 }
+
 void MainGame::initSystems() {
 	SDL_Init(SDL_INIT_EVERYTHING);
 	
@@ -60,7 +62,6 @@ void MainGame::initSystems() {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-
 	initSkybox();
 
 	player = new Player();
@@ -70,7 +71,7 @@ void MainGame::initSystems() {
 	}
 	else
 	{
-		drawPlayer();
+		//drawPlayer();
 	}
 
 	_loader = new TextureLoader();
@@ -78,8 +79,6 @@ void MainGame::initSystems() {
 
 	////////////////////////COLLISION IS IN CPLUSPLUSGUT TUTS!!!!!!!!!!!!!!!!!!!
 }
-
-
 
 void MainGame::gameLoop() {
 	while (_gameState != GameState::EXIT)
@@ -92,6 +91,8 @@ void MainGame::gameLoop() {
 			cameraMove( player->camera->direction);
 		}
 	}
+	glDeleteBuffers(1, &indexvbo);
+	glDeleteBuffers(1, &vbo);
 }  
 
 void MainGame::processInput() {
@@ -111,8 +112,7 @@ void MainGame::processInput() {
 			}
 			case SDL_MOUSEWHEEL:
 			{
-				  player->camera->x += event.wheel.y;
-				  player->camera->z += event.wheel.y;
+				   player->camera->radius += event.wheel.y;
 				break;
 			}
 	 		case SDL_KEYDOWN:
@@ -143,7 +143,16 @@ void MainGame::processInput() {
 					else
 						cout << "--Bounding box showing is disabled" << endl;
 				}
+				else if (event.key.keysym.sym == SDLK_l)
+				{
 
+					player->camera->isLocked = !player->camera->isLocked;
+
+					if (player->camera->isLocked)
+						cout << "--Camera is locked" << endl;
+					else
+						cout << "--Camera is unlocked" << endl;
+				}
 				break;
 			}
 			case SDL_KEYUP:
@@ -195,18 +204,17 @@ void MainGame::drawPlayer()
 
 
 	glEnable(GL_TEXTURE);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+	//glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHT0);
 
 	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glEnable(GL_NORMALIZE);
 
-	GLfloat position[] = {  player->position.coords.x, fabs( player->camera->moveY * 2),  player->position.coords.z , 1.0 };
-	GLfloat vector[] = {  player->position.coords.x, fabs( player->camera->moveY),  player->position.coords.z };
+	GLfloat position[] = { player->position.coords.x, fabs(player->boundingBox.height * 2),- player->position.coords.z, 1.0 };
+	GLfloat vector[] = {player->position.coords.x, 0, -player->position.coords.z };
 
 	glLightfv(GL_LIGHT0, GL_POSITION, position);
 	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, vector);
-
 	
 	//glTranslatef(0, 0, 0);
 	//glRotatef(player->position.tempAngle, 0, 1, 0);
@@ -214,8 +222,6 @@ void MainGame::drawPlayer()
 
 	int index = 0;
 	int mats = 0;
-
-	float texcoords[] = { 0., 0., 0., 1., 1., 1. };
 
 	for (int face = 0; face <  player->object->vertex_faces.size(); face += 3)
 	{
@@ -230,15 +236,20 @@ void MainGame::drawPlayer()
 
 			for (int vertex = 0; vertex < 3; vertex++)
 			{
-				float xV = player->object->vertex[player->object->vertex_faces[index] - 1].x   * player->scale;
-				float zV = player->object->vertex[player->object->vertex_faces[index] - 1].z   * player->scale;
-				float xN = player->object->normals[player->object->normals_faces[index] - 1].x   * player->scale;
-				float zN = player->object->normals[player->object->normals_faces[index] - 1].z   * player->scale;
+				float xV = player->object->vertex[player->object->vertex_faces[index] - 1].x * player->scale;
+				float zV = player->object->vertex[player->object->vertex_faces[index] - 1].z * player->scale;
+				float xN = player->object->normals[player->object->normals_faces[index] - 1].x * player->scale;
+				float zN = player->object->normals[player->object->normals_faces[index] - 1].z * player->scale;
 				
 				float coordX, coordZ;
 	
-				coordX = player->position.coords.x  + rotate2D(xV, zV, player->position.angle);
-				coordZ = player->position.coords.z  + rotate2D(zV, -xV, player->position.angle);
+				float tempAngle = 
+
+				//coordX = player->position.coords.x  + rotate2D(xV, zV, player->position.angle); //model rotation using wasd rotation 
+				//coordZ = player->position.coords.z  + rotate2D(zV, -xV, player->position.angle);
+
+				coordX = player->position.coords.x + rotate2D(xV, zV, -player->camera->deltaAngle - 1.5);  //model rotation using camera rotation 
+				coordZ = player->position.coords.z + rotate2D(zV, -xV, -player->camera->deltaAngle- 1.5);
 
 				glTexCoord2f(player->object->UV_vertex[player->object->texture_faces[index] - 1].x , player->object->UV_vertex[ player->object->texture_faces[index] - 1].y); 
 				glNormal3f(player->position.coords.x + rotate2D(xN, zN, player->position.angle), player->position.coords.y + player->object->normals[player->object->normals_faces[index] - 1].y   *  player->scale, player->position.coords.z + rotate2D(zN, -xN, player->position.angle));
@@ -259,7 +270,7 @@ void MainGame::drawPlayer()
 		//bounding box
 		for (int i = 0; i < 24; i++)
 		{
-			glVertex3f(player->position.coords.x + rotate2D(player->boundingBox.coords[i].x, player->boundingBox.coords[i].z, player->position.angle), player->position.coords.y + player->boundingBox.coords[i].y, player->position.coords.z + rotate2D(player->boundingBox.coords[i].z, -player->boundingBox.coords[i].x, player->position.angle));
+			glVertex3f(player->position.coords.x + rotate2D(player->boundingBox.coords[i].x, player->boundingBox.coords[i].z, -player->camera->deltaAngle - 1.5), player->position.coords.y + player->boundingBox.coords[i].y, player->position.coords.z + rotate2D(player->boundingBox.coords[i].z, -player->boundingBox.coords[i].x, -player->camera->deltaAngle - 1.5));
 		}
 
 		glEnd();
@@ -280,6 +291,27 @@ void MainGame::drawPlayer()
 	 player->object->UV_vertex.clear();
 
 	lists.push_back(num);*/
+
+	
+	
+/*	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, player->object->vertex.size()*sizeof(float )*3, &player->object->vertex[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+*/
+
+	//glGenBuffers(1, &indexvbo);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexvbo);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)* 3, pindices, GL_STATIC_DRAW);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		//glLoadIdentity();
+		//glEnableClientState(GL_VERTEX_ARRAY);
+		//glEnableClientState(GL_COLOR_ARRAY);
+
+		//glVertexPointer(3, GL_FLOAT, 0, & player->object->vertex);
+		//glDrawArrays(GL_TRIANGLES, 0,  player->object->vertex.size()/3);
+
 }
 
 #define MAIN_SCALER 1.0
@@ -288,11 +320,33 @@ void MainGame::render() {
 
 	glLoadIdentity();
 
-	gluLookAt( player->camera->x,  player->camera->y,  player->camera->z,  player->camera->x +  player->camera->lx,  player->camera->y +  player->camera->ly,  player->camera->z +  player->camera->lz, 0.f, 1.f, 0.f);
-	glTranslatef( player->camera->moveX * MAIN_SCALER,  player->camera->moveY * MAIN_SCALER,  player->camera->moveZ * MAIN_SCALER);
+	if (player->camera->isFreeMoving)
+	{
+		gluLookAt(player->camera->x, player->camera->y, player->camera->z, player->camera->x + player->camera->lx, player->camera->y + player->camera->ly, player->camera->z + player->camera->lz, 0.f, 1.f, 0.f);
+		glTranslatef( player->camera->moveX * MAIN_SCALER,  player->camera->moveY * MAIN_SCALER,  player->camera->moveZ * MAIN_SCALER);
+	}
+	else
+	{
+		float eyeX, eyeY, eyeZ;
 
-	drawSkybox(510.0f);
-	drawFloor();
+		if (player->camera->isLocked)
+		{
+			eyeX = player->camera->radius* sin(player->camera->deltaAngle);
+			eyeY = player->position.coords.y + player->camera->radius* sin(player->camera->deltaAngleY);
+			eyeZ = player->camera->radius* cos(player->camera->deltaAngle);
+			gluLookAt(player->position.coords.x + rotate2D(eyeX, eyeZ, player->position.angle), eyeY, player->position.coords.z + rotate2D(eyeZ, -eyeX, player->position.angle), player->position.coords.x, player->position.coords.y + player->boundingBox.height / 2 * player->scale, player->position.coords.z, 0.f, 1.f, 0.f);
+
+		}
+		else
+		{
+			eyeX = player->position.coords.x + player->camera->radius* sin(player->camera->deltaAngle);
+			eyeY = player->position.coords.y + player->camera->radius* sin(player->camera->deltaAngleY);
+			eyeZ = player->position.coords.z + player->camera->radius* cos(player->camera->deltaAngle);
+			gluLookAt(eyeX, eyeY, eyeZ, player->position.coords.x, player->position.coords.y + player->boundingBox.height / 2 * player->scale, player->position.coords.z, 0.f, 1.f, 0.f);
+		}
+
+	}
+	drawSkybox(500.0f);
 
 	if (player->object)
 	{
@@ -303,21 +357,36 @@ void MainGame::render() {
 		//glCallList(lists[0]);
 		drawPlayer();
 
+	/*	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(float)* 3, 0);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, player->object->vertex.size());
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		*/
 		glPopMatrix();
 	}
-
+	drawFloor();
 	SDL_GL_SwapWindow(_window);
 }
 
  void MainGame::mouseMove(int x, int y)
 {
-	  player->camera->deltaAngle = (x - player->camera->xOrigin) * 0.01f;
-	  player->camera->deltaAngle = (x - player->camera->xOrigin) * 0.01f;
-	  player->camera->deltaAngleY = y * 0.01f;
+	 player->camera->deltaAngle += (x - player->camera->xOld) * 0.02f;
+	 player->camera->deltaAngleY -= (y - player->camera->yOld) * 0.02f;
 
-	  player->camera->lx = sin( player->camera->angle + player->camera->deltaAngle);
-	  player->camera->ly = -tan( player->camera->angley + player->camera->deltaAngleY);
-	  player->camera->lz = -cos( player->camera->angle + player->camera->deltaAngle);
+	  player->camera->xOld = x;
+	  player->camera->yOld = y;
+
+
+
+	  if (player->camera->isFreeMoving)
+	  {
+		  player->camera->lx = sin(player->camera->angle + player->camera->deltaAngle);
+		  player->camera->ly = -tan(player->camera->angley + player->camera->deltaAngleY);
+		  player->camera->lz = -cos(player->camera->angle + player->camera->deltaAngle);
+	  }
+
  }
 
  float MainGame::collisionPointPlane(float normalX, float normalY, float normalZ, float x1, float z1, float x2, float z2)
@@ -402,26 +471,43 @@ void MainGame::render() {
 	 switch (dir) {
 	 case SDLK_w:
 	 {
-		 player->camera->moveX -=  player->camera->lx / length *  player->camera->velocity;
-		 player->camera->moveZ -=  player->camera->lz / length *  player->camera->velocity;
 
 		 if (!player->camera->isFreeMoving)
 		 {
-			 player->position.coords.x += 1.0  * cos(player->position.angle);// player->camera->lx / length *  player->camera->velocity;
-			 player->position.coords.z += 1.0  * sin(player->position.angle);// player->camera->lz / length *  player->camera->velocity;
+			 player->position.coords.x -= 1.0 * sin(player->camera->deltaAngle);//moving in the camera's forward direction
+			 player->position.coords.z -= 1.0 * cos(player->camera->deltaAngle);
+			 
+			// player->position.angle -= player->camera->deltaAngle;
+
+			 //player->position.coords.x += 1.0 * cos(player->position.angle); //moving in the model's forward direction
+			// player->position.coords.z += 1.0 * sin(player->position.angle);
+
+			 player->camera->moveX = -player->position.coords.x;
+			 player->camera->moveZ = -player->position.coords.z;
+		 }
+		 else
+		 {
+			 player->camera->moveX -= player->camera->lx / length *  player->camera->velocity;
+			 player->camera->moveZ -= player->camera->lz / length *  player->camera->velocity;
 		 }
 
 		break;
 	 }
 	 case SDLK_s:
 	 {
-		 player->camera->moveX +=  player->camera->lx / length *  player->camera->velocity;
-		 player->camera->moveZ +=  player->camera->lz / length *  player->camera->velocity;
 
 		 if (!player->camera->isFreeMoving)
 		 {
 			 player->position.coords.x -= 1.0  * cos(player->position.angle);//player->camera->lx / length *  player->camera->velocity;
 			 player->position.coords.z -= 1.0  * sin(player->position.angle);//player->camera->lz / length *  player->camera->velocity;
+
+			 player->camera->moveX = -player->position.coords.x;
+			 player->camera->moveZ = -player->position.coords.z;
+		 }
+		 else
+		 {
+			 player->camera->moveX += player->camera->lx / length *  player->camera->velocity;
+			 player->camera->moveZ += player->camera->lz / length *  player->camera->velocity;
 		 }
 
 		break;
@@ -436,7 +522,6 @@ void MainGame::render() {
 			else
 			{
 					player->position.angle -= .5;
-
 			}
 
 		break;
@@ -560,19 +645,24 @@ void MainGame::render() {
 
  void MainGame::drawFloor()
  {
-
+	// glEnable(GL_LIGHTING);
+	// glEnable(GL_LIGHT0);
 	 glBindTexture(GL_TEXTURE_2D, texture_id[0]);
 
 	 glBegin(GL_QUADS);
-	 glNormal3f(0.0, -1.0, 0.0);
+
 
 	 glTexCoord2f(0.0f, 0.0f);
+	 glNormal3f(0.0, 1.0, 0.0);
 	 glVertex3f(0.0f, 0.0f, 0.0f);
 	 glTexCoord2f(0.0f, 100.0f);
+	 glNormal3f(0.0, 1.0, 0.0);
 	 glVertex3f(0.0f, 0.0f, 100.0f);
 	 glTexCoord2f(100.0f, 100.0f);
+	 glNormal3f(0.0, 1.0, 0.0);
 	 glVertex3f(100.0f, 0.0f, 100.0f);
 	 glTexCoord2f(100.0f, 0.0f);
+	 glNormal3f(0.0, 1.0, 0.0);
 	 glVertex3f(100.0f, 0.0f, 0.0f);
 
 	 glEnd();
