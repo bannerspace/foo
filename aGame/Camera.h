@@ -7,7 +7,7 @@ public:
 
 	float lx, ly, lz;
 	float x, y, z;
-	float deltaAngle, deltaAngleY;
+	float deltaAngle, deltaAngleY, lastAngle;
 	float angle, angley;
 	int xOrigin;
 	int xOld, yOld;

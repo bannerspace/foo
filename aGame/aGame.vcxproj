@@ -72,21 +72,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimationLoader.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CommandManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainGame.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="ModelLoader.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="ObjectLoader.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimationLoader.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CommandManager.h" />
     <ClInclude Include="MainGame.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="ModelLoader.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="ObjectLoader.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="TextureLoader.h" />
   </ItemGroup>

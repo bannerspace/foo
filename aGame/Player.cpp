@@ -4,33 +4,52 @@
 #include <iostream>
 #include <algorithm>
 
+
+#define PI 3.14159265359
+
 Player::Player()
 {	
 	try
 	{
-		position = { { 0., 0., 0. }, 0., 0., -1, 0, 0 , false};
-		scale = .1f;
-		//playerState = PlayerState::ALIVE;
 		camera = new Camera();
-		camera->x -= 5.0f;
 
 		if (!camera)
-			throw "Can't create player's camera object";
-
-		ObjectLoader loader;
-		object = loader.ReadObjectGeometry("E:\\Users\\Banner\\Desktop\\aGame\\aGame\\resources\\objects\\Captain America");
-
-		if (!object)
+			throw "Can't create player's camera model";
+		else
 		{
-			throw "Can't load player's geometry";
+			camera->x -= 5.0f;
+			camera->radius = boundingBox.height / 2 / 2;
 		}
-		boundingBox.isShowing = false;
-		CalculateSize();
-		camera->radius = boundingBox.height / 2 / 2;
+		animIsCalled = false;
+		animLoader = new AnimationLoader();
+		animLoader->loadAnimation("E:\\Users\\Banner\\Desktop\\aGame\\aGame\\resources\\objects\\animation\\", "animation_list.txt");
+		currentFrame = 0;
+		animation = new Animation[animLoader->framesCount];
+
+		for (int i = 0; i < animLoader->framesCount; i++)
+		{
+			glGenBuffers(1, &animation[i].tid);
+			glBindBuffer(GL_ARRAY_BUFFER, animation[i].tid);
+			glBufferData(GL_ARRAY_BUFFER, animLoader->frames[i]->UV_vertices.size()*sizeof(float), NULL, GL_STATIC_DRAW);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, animLoader->frames[i]->UV_vertices.size()*sizeof(float), &animLoader->frames[i]->UV_vertices[0]);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			glGenBuffers(1, &animation[i].nid);
+			glBindBuffer(GL_ARRAY_BUFFER, animation[i].nid);
+			glBufferData(GL_ARRAY_BUFFER, animLoader->frames[i]->normals.size()*sizeof(float), NULL, GL_STREAM_DRAW);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, animLoader->frames[i]->normals.size()*sizeof(float), &animLoader->frames[i]->normals[0]);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			glGenBuffers(1, &animation[i].vid);
+			glBindBuffer(GL_ARRAY_BUFFER, animation[i].vid);
+			glBufferData(GL_ARRAY_BUFFER, animLoader->frames[i]->vertices.size()*sizeof(float), NULL, GL_STREAM_DRAW);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, animLoader->frames[i]->vertices.size()*sizeof(float), &animLoader->frames[i]->vertices[0]);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
 	}
 	catch (const char* error)
 	{
-		object = NULL;
+		model = NULL;
 		std::cout << error << std::endl;
 	}
 
@@ -38,145 +57,148 @@ Player::Player()
 
 Player::~Player()
 {
+	delete[] camera;
+	delete[] animLoader;
+	delete[] animation;
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	for (int i = 0; i < animLoader->framesCount; i++)
+	{
+		glDeleteBuffers(1, &animation[i].vid);
+		glDeleteBuffers(1, &animation[i].nid);
+		glDeleteBuffers(1, &animation[i].tid);
+	}
 }
 
-
-void Player::CalculateSize()
+bool Player::animIsReady()
 {
-	//x.push_back(object->vertex[0].x);
-	float xMax = object->vertex[0].x;
-	float xMin = xMax;
+	return (t.elapsedTime() > (double)1/30) ? true : false;
+}
 
-	float yMax = object->vertex[0].y;
-	float yMin = yMax;
+void Player::cameraCall() 
+{
+	glTranslatef(position.coords.x, 0, position.coords.z);
 
-	float zMax = object->vertex[0].z;
-	float zMin = zMax;
-	//boundingBox.width = max_element(std::begin(object->vertex))
-	for (int i = 0; i < object->vertex.size(); i++)
+	if (camera->cameraMove)
+		glRotatef((camera->deltaAngle + 1.5) * 180 / PI, 0, 1, 0);
+	else
+		glRotatef((camera->lastAngle + 1.5) * 180 / PI, 0, 1, 0);
+}
+
+void Player::drawAnimation()
+{
+	if (animIsReady() && currentFrame != futureFrame)
 	{
-		if (xMax < object->vertex[i].x)
-			xMax = object->vertex[i].x;
-		if (xMin > object->vertex[i].x)
-			xMin = object->vertex[i].x;
+		currentFrame++;
+		animIsCalled = false;
+		if (currentFrame == animLoader->framesCount)
+		{
+			currentFrame = 0;
+			futureFrame = 0;
+		}
+	}
+	//cout << currentFrame << endl;
 
-		if (yMax < object->vertex[i].y)
-			yMax = object->vertex[i].y;
-		if (yMin > object->vertex[i].y)
-			yMin = object->vertex[i].y;
+	glPushMatrix();
 
-		if (zMax < object->vertex[i].z)
-			zMax = object->vertex[i].z;
-		if (zMin > object->vertex[i].z)
-			zMin = object->vertex[i].z;
+	cameraCall();
+	if (boundingBox.isShowing)
+	{
+		glLineWidth(5.0f);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glBindBuffer(GL_ARRAY_BUFFER, bbvid);
+		glVertexPointer(3, GL_FLOAT, 0, NULL);
+		glDrawArrays(GL_LINES, 0, 72);
+		glDisableClientState(GL_VERTEX_ARRAY);
 	}
 
-	boundingBox.width = abs(xMax - xMin);
-	boundingBox.height = abs(yMax - yMin);
-	boundingBox.depth = abs(zMax - zMin);
+	glScalef(scale, scale, scale);
+
+	glEnable(GL_TEXTURE);
+	glEnable(GL_NORMALIZE);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+	GLfloat pos[] = { position.coords.x, fabs(boundingBox.height * 2), -position.coords.z, 1.0 };
+	GLfloat vector[] = { position.coords.x, 0, -position.coords.z };
+
+	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, vector);
 
 
-	boundingBox.x = xMin;
-	boundingBox.y = yMin;
-	boundingBox.z = zMin;
+	glBindTexture(GL_TEXTURE_2D, model->textures[0]);
 
-	boundingBox.coords[0].x = boundingBox.x   * scale;
-	boundingBox.coords[0].y = 0;
-	boundingBox.coords[0].z = boundingBox.z   * scale;
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, animation[(unsigned int)currentFrame].tid);
+	glTexCoordPointer(2, GL_FLOAT, 0, NULL);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, animation[(unsigned int)currentFrame].nid);
+	glNormalPointer(GL_FLOAT, 0, NULL);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, animation[(unsigned int)currentFrame].vid);
+	glVertexPointer(3, GL_FLOAT, 0, NULL);
+	glDrawArrays(GL_TRIANGLES, 0, animLoader->frames[(unsigned int)currentFrame]->vertices.size() / 3);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	boundingBox.coords[1].x = boundingBox.x   * scale;
-	boundingBox.coords[1].y = 0;
-	boundingBox.coords[1].z = (boundingBox.depth + boundingBox.z)   * scale;
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	boundingBox.coords[2].x = boundingBox.x   * scale;
-	boundingBox.coords[2].y = boundingBox.height   * scale;
-	boundingBox.coords[2].z = boundingBox.z   * scale;
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
 
-	boundingBox.coords[3].x = boundingBox.x   * scale;
-	boundingBox.coords[3].y = boundingBox.height   * scale;
-	boundingBox.coords[3].z = (boundingBox.depth + boundingBox.z)   * scale;
+	glDisable(GL_TEXTURE);
+	glDisable(GL_NORMALIZE);
 
-	boundingBox.coords[4].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[4].y = 0;
-	boundingBox.coords[4].z = boundingBox.z   * scale;
-
-	boundingBox.coords[5].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[5].y = 0;
-	boundingBox.coords[5].z = (boundingBox.depth + boundingBox.z)   * scale;
-
-	boundingBox.coords[6].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[6].y = boundingBox.height   * scale;
-	boundingBox.coords[6].z = boundingBox.z    * scale;
-
-	boundingBox.coords[7].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[7].y = boundingBox.height   * scale;
-	boundingBox.coords[7].z = (boundingBox.depth + boundingBox.z)    * scale;
-
-
-	boundingBox.coords[8].x = boundingBox.x   * scale;
-	boundingBox.coords[8].y = 0;
-	boundingBox.coords[8].z = boundingBox.z   * scale;
-
-	boundingBox.coords[9].x = boundingBox.x   * scale;
-	boundingBox.coords[9].y = boundingBox.height   * scale;
-	boundingBox.coords[9].z = boundingBox.z   * scale;
-
-	boundingBox.coords[10].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[10].y = 0;
-	boundingBox.coords[10].z = boundingBox.z   * scale;
-
-	boundingBox.coords[11].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[11].y = boundingBox.height   * scale;
-	boundingBox.coords[11].z =  boundingBox.z    * scale;
-
-	boundingBox.coords[12].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[12].y = 0;
-	boundingBox.coords[12].z = (boundingBox.depth + boundingBox.z)    * scale;
-
-	boundingBox.coords[13].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[13].y = boundingBox.height   * scale;
-	boundingBox.coords[13].z = (boundingBox.depth + boundingBox.z)    * scale;
-
-	boundingBox.coords[14].x = boundingBox.x    * scale;
-	boundingBox.coords[14].y = 0;
-	boundingBox.coords[14].z = (boundingBox.depth + boundingBox.z)    * scale;
-
-	boundingBox.coords[15].x = boundingBox.x    * scale;
-	boundingBox.coords[15].y = boundingBox.height   * scale;
-	boundingBox.coords[15].z = (boundingBox.depth + boundingBox.z)    * scale;
-
-
-	boundingBox.coords[16].x = boundingBox.x    * scale;
-	boundingBox.coords[16].y = 0;
-	boundingBox.coords[16].z = boundingBox.z    * scale;
-
-	boundingBox.coords[17].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[17].y = 0;
-	boundingBox.coords[17].z = boundingBox.z    * scale;
-
-	boundingBox.coords[18].x = boundingBox.x    * scale;
-	boundingBox.coords[18].y = 0;
-	boundingBox.coords[18].z = (boundingBox.depth + boundingBox.z)   * scale;
-
-	boundingBox.coords[19].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[19].y = 0;
-	boundingBox.coords[19].z = (boundingBox.depth + boundingBox.z)   * scale;
-
-	boundingBox.coords[20].x = boundingBox.x    * scale;
-	boundingBox.coords[20].y = boundingBox.height   * scale;
-	boundingBox.coords[20].z = boundingBox.z    * scale;
-
-	boundingBox.coords[21].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[21].y = boundingBox.height   * scale;
-	boundingBox.coords[21].z = boundingBox.z    * scale;
-
-	boundingBox.coords[22].x = boundingBox.x    * scale;
-	boundingBox.coords[22].y = boundingBox.height   * scale;
-	boundingBox.coords[22].z = (boundingBox.depth + boundingBox.z)   * scale;
-
-	boundingBox.coords[23].x = (boundingBox.x + boundingBox.width)   * scale;
-	boundingBox.coords[23].y =  boundingBox.height   * scale;
-	boundingBox.coords[23].z = (boundingBox.depth + boundingBox.z)   * scale;
-
+	glPopMatrix();
 }
 
+
+
+/*void Player::updateVBO()
+{
+	int index = 0;
+	for (int face = 0; face < model->vertex_faces.size(); face++)
+	{
+		float xV = originVertices[index];
+		float zV = originVertices[index + 2];
+		float xN = originNormals[index];
+		float zN = originNormals[index + 2];
+
+		float coordX, coordZ, normalX, normalZ;
+
+		coordX = rotate2D(xV, zV, - camera->deltaAngle - 1.5); 
+		coordZ = rotate2D(zV, -xV, - camera->deltaAngle - 1.5);
+
+		normalX = rotate2D(xN, zN, - camera->deltaAngle - 1.5);
+		normalZ = rotate2D(zN, -xN, - camera->deltaAngle - 1.5);
+
+
+		 model->normals[index] =  position.coords.x + normalX;
+		 model->normals[index + 2] =  position.coords.z + normalZ;
+
+		 model->vertices[index] =  coordX;
+		 model->vertices[index + 2] =  coordZ;
+		index += 3;
+	}
+	if (boundingBox.isShowing)
+	{
+		for (int i = 0; i < 72; i+=3)
+		{
+			boundingBox.coords[i] = position.coords.x + rotate2D(BBoxOriginCoords[i], BBoxOriginCoords[i + 2], -camera->deltaAngle - 1.5);
+			//glVertex3f(position.coords.x + rotate2D(boundingBox.coords[i].x, boundingBox.coords[i].z, -player->camera->deltaAngle - 1.5), player->position.coords.y + player->boundingBox.coords[i].y, player->position.coords.z + rotate2D(player->boundingBox.coords[i].z, -player->boundingBox.coords[i].x, -player->camera->deltaAngle - 1.5));
+			boundingBox.coords[i + 2] = position.coords.z + rotate2D(BBoxOriginCoords[i + 2], -BBoxOriginCoords[i], -camera->deltaAngle - 1.5);
+		}
+		glBindBuffer(GL_ARRAY_BUFFER, bbvid);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 72 * sizeof(float), &boundingBox.coords[0]);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, nid);
+	glBufferSubData(GL_ARRAY_BUFFER, 0,  model->normals.size()*sizeof(float), & model->normals[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, vid);
+	glBufferSubData(GL_ARRAY_BUFFER, 0,  model->vertices.size()*sizeof(float), & model->vertices[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}*/

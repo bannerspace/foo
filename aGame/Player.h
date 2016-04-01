@@ -1,48 +1,54 @@
 #pragma once
 
 #include "Object.h"
-#include "ObjectLoader.h"
 #include "Camera.h"
-#include "TextureLoader.h"
+#include "AnimationLoader.h"
+#include <vector>
+#include <time.h>
 
-enum class PlayerState { ALIVE, DEAD };
+class timer {
+private:
+	unsigned long begTime;
+public:
+	void start() {
+		begTime = clock();
+	}
 
-class Player
+	double elapsedTime() {
+		return ((double)clock() - begTime) / CLOCKS_PER_SEC;
+	}
+
+	bool isTimeout(unsigned long seconds) {
+		return seconds >= elapsedTime();
+	}
+};
+
+class Player : public Object
 {
 
 public:
 	Player();
 	~Player();
 
-	struct Coords {
-		float x, y, z;
-	};
-
-	struct Position {
-		Coords coords;
-		float angle;
-		float tempAngle;
-		float normalX, normalY, normalZ;
-		bool isRotating;
-	};
-
-	struct BoundingBox {
-		float width, height, depth;
-		float x, y, z;
-		Coords coords[24];
-		bool isShowing;
-	};
-
-	Position position;
-	BoundingBox boundingBox;
-	PlayerState playerState;
-
-	Object *object;
 	Camera *camera;
-	float scale;
+	virtual void cameraCall();
 
-private:
-	void CalculateSize();
-	//TextureLoader _loader;
+	struct Animation
+	{
+		unsigned int vid;
+		unsigned int nid;
+		unsigned int tid;
+	};
+
+	AnimationLoader *animLoader;
+	Animation *animation;
+	unsigned int currentFrame;
+	unsigned int futureFrame;
+	void drawAnimation();
+	bool animIsReady();
+	bool animIsCalled;
+	//void updateVBO();
+
+	timer t;
 };
 

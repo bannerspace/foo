@@ -24,9 +24,6 @@
     <ClCompile Include="TextureLoader.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectLoader.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
@@ -39,15 +36,21 @@
     <ClCompile Include="CommandManager.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
+    <ClCompile Include="AnimationLoader.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelLoader.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainGame.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="TextureLoader.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectLoader.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="Object.h">
@@ -60,6 +63,15 @@
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="CommandManager.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationLoader.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelLoader.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
   </ItemGroup>

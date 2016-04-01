@@ -37,11 +37,7 @@ private:
 	void BindTexture(void *data, int width, int height, int format, unsigned int number);
 	unsigned int texture_id[100];
 	//
-	void initGlew();
-	//
 	void drawFloor();
-	void drawPlayer();
-
 	//
 	float rotate2DAboutPoint(float x, float z, float x0, float z0, float angle);
 	float rotate2D(float x, float z, float angle);
@@ -49,16 +45,13 @@ private:
 
 
 	Player *player;
+
 	SDL_Window *_window;
 	int _screenWidth;
 	int _screenHeight;
 	GameState _gameState;
 
 	vector<unsigned int> lists;
-
-	unsigned int vbo;
-	unsigned int indexvbo;
-	#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 	TextureLoader *_loader;	
 

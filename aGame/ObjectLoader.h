@@ -10,7 +10,7 @@ public:
 	ObjectLoader();
 	~ObjectLoader();
 
-	Object *ReadObjectGeometry(const char* Filename);
+	Object *ReadObjectGeometry(const char* geometry, const char* materials);
 	Object *object;
 
 };

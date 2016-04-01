@@ -11,6 +11,7 @@ Camera::Camera()
 	z = 0;
 	deltaAngle = 0.0;
 	deltaAngleY = 0.0;
+	lastAngle = 0.0;
 	angle = 0.0;
 	angley = 0.0;
 	xOrigin = -1;
@@ -21,7 +22,7 @@ Camera::Camera()
 	moveZ = 0.0;
 	cameraMove = false;
 	direction = '\0';
-	velocity = 1.0f;
+	velocity = .1f;
 	isStuck = false;
 	isFreeMoving = false;
 	isLocked = false;
