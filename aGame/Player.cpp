@@ -73,7 +73,7 @@ Player::~Player()
 
 bool Player::animIsReady()
 {
-	return (t.elapsedTime() > (double)1/30) ? true : false;
+	return (t.elapsedTime() > (double)1/animLoader->framesCount) ? true : false;
 }
 
 void Player::cameraCall() 
